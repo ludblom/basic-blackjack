@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# Simple snake game (C) Ludvig Blomkvist under MIT License
-
 import math
 import random
 import sys
