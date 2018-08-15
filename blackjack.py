@@ -18,8 +18,17 @@ class Card:
 
 
 class Deck:
+    __countCards = None
+
     def __init__(self, deck):
         self.deck = deck
+        self.__countCards = 0
+
+    def updateCountCards(self, count):
+        self.__countCards += count
+
+    def returnCountCards(self):
+        return self.__countCards
 
     def getDeck(self):
         return self.deck
@@ -104,6 +113,26 @@ def calculate(player):
             player.updateScore(vals.get(card.getValue()))
 
 
+def calcCountCards(dealer, player, cards):
+    playerCards = dealer.getCards() + player.getCards()
+    for card in playerCards:
+        if(card.getValue() is "A" or
+           card.getValue() is "J" or
+           card.getValue() is "Q" or
+           card.getValue() is "K"):
+            # Add -1
+            deck.updateCountCards(-1)
+        elif(int(card.getValue()) >= 2 and int(card.getValue()) <= 6):
+            # Add 1
+            deck.updateCountCards(1)
+        elif(int(card.getValue()) >= 7 and int(card.getValue()) <= 9):
+            # Add 0
+            deck.updateCountCards(0)
+        else:
+            # Subtract one
+            deck.updateCountCards(-1)
+
+
 def calculateDealer(player):
     vals = {"A": 11,
             "J": 10,
@@ -171,35 +200,43 @@ def whoWon(dealer, player, cards):
 
     if(playerScore == dealerScore):
         print("\n\nDRAW!\n\n")
+        calcCountCards(dealer, player, cards)
         play(cards)
     elif((dealerScore < playerScore or
           dealerScore > 21) and
          playerScore <= 21):
         print("\n\nPLAYER WIN!\n\n")
+        calcCountCards(dealer, player, cards)
         play(cards)
     else:
         print("\n\nDEALER WIN!\n\n")
+        calcCountCards(dealer, player, cards)
         play(cards)
 
 
 def playerAndComputer(dealer, player, cards):
-    inp = input("(D)raw, (S)tay, (Q)uit: ")
+    if(len(deck.getDeck()) > 0):
+        inp = input("(D)raw, (S)tay, (Q)uit: ")
 
-    if(inp is "D" or inp is "d"):
-        player.addCard(deck.draw(1))
-        calculate(player)
-        printCards(player)
-        if(player.getScore() >= 21):
-            # Done, let dealer draw
+        if(inp is "D" or inp is "d"):
+            player.addCard(deck.draw(1))
+            calculate(player)
+            printCards(player)
+            if(player.getScore() >= 21):
+                # Done, let dealer draw
+                dealerDrawEndCards(dealer, player)
+                whoWon(dealer, player, cards)
+
+        elif(inp is "S" or inp is "s"):
+            # Stay and ley dealer draw
             dealerDrawEndCards(dealer, player)
             whoWon(dealer, player, cards)
 
-    elif(inp is "S" or inp is "s"):
-        # Stay and ley dealer draw
-        dealerDrawEndCards(dealer, player)
-        whoWon(dealer, player, cards)
+        elif(inp is "Q" or inp is "q"):
+            sys.exit()
 
-    elif(inp is "Q" or inp is "q"):
+    else:
+        print("End of deck")
         sys.exit()
 
 
@@ -207,7 +244,10 @@ def play(deck):
     dealer = Player("dealer")
     player = Player("player")
 
-    while(len(deck.getDeck()) > 0):
+    # TODO: Add conditions to show it
+    print("Status: %d" % int(deck.returnCountCards()))
+
+    if(len(deck.getDeck()) > 4):
         # Clean round
         dealer.clearCards()
         player.clearCards()
@@ -225,6 +265,10 @@ def play(deck):
 
         while(True):
             playerAndComputer(dealer, player, deck)
+
+    else:
+        print("End of deck.")
+        sys.exit()
 
 
 if __name__ == "__main__":
