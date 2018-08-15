@@ -45,12 +45,17 @@ class Deck:
 
 
 class Player:
-    __name = None
-
     def __init__(self, name):
         self.cards = []
         self.score = 0
         self.__name = name
+        self.wins = 0
+
+    def addWin(self):
+        self.wins += 1
+
+    def getWins(self):
+        return self.wins
 
     def getName(self):
         return self.__name
@@ -98,7 +103,6 @@ def printDealersCards(player):
     print("****************************")
 
 
-#  TODO: Have to be able to choose eather A = 11 or A = 1
 def calculate(player):
     vals = {"A": 11,
             "J": 10,
@@ -111,6 +115,26 @@ def calculate(player):
             player.updateScore(int(card.getValue()))
         else:
             player.updateScore(vals.get(card.getValue()))
+
+    if(player.getScore() > 21):
+        for card in player.getCards():
+            if(card.getValue() is "A"):
+                player.updateScore(-10)
+                if(int(player.getScore()) <= 21):
+                    return
+
+
+def calculateDealer(player):
+    vals = {"A": 11,
+            "J": 10,
+            "Q": 10,
+            "K": 10}
+
+    card = player.getCards()
+    if(vals.get(card[0].getValue()) is None):
+        player.updateScore(int(card[0].getValue()))
+    else:
+        player.updateScore(vals.get(card[0].getValue()))
 
 
 def calcCountCards(dealer, player, cards):
@@ -131,19 +155,6 @@ def calcCountCards(dealer, player, cards):
         else:
             # Subtract one
             deck.updateCountCards(-1)
-
-
-def calculateDealer(player):
-    vals = {"A": 11,
-            "J": 10,
-            "Q": 10,
-            "K": 10}
-
-    card = player.getCards()
-    if(vals.get(card[0].getValue()) is None):
-        player.updateScore(int(card[0].getValue()))
-    else:
-        player.updateScore(vals.get(card[0].getValue()))
 
 
 def createDeck(decks):
@@ -201,20 +212,22 @@ def whoWon(dealer, player, cards):
     if(playerScore == dealerScore):
         print("\n\nDRAW!\n\n")
         calcCountCards(dealer, player, cards)
-        play(cards)
+        play(cards, dealer, player)
     elif((dealerScore < playerScore or
           dealerScore > 21) and
          playerScore <= 21):
         print("\n\nPLAYER WIN!\n\n")
         calcCountCards(dealer, player, cards)
-        play(cards)
+        player.addWin()
+        play(cards, dealer, player)
     else:
         print("\n\nDEALER WIN!\n\n")
         calcCountCards(dealer, player, cards)
-        play(cards)
+        dealer.addWin()
+        play(cards, dealer, player)
 
 
-def playerAndComputer(dealer, player, cards):
+def playerAndComputer(deck, dealer, player):
     if(len(deck.getDeck()) > 0):
         inp = input("(D)raw, (S)tay, (Q)uit: ")
 
@@ -225,12 +238,12 @@ def playerAndComputer(dealer, player, cards):
             if(player.getScore() >= 21):
                 # Done, let dealer draw
                 dealerDrawEndCards(dealer, player)
-                whoWon(dealer, player, cards)
+                whoWon(dealer, player, deck)
 
         elif(inp is "S" or inp is "s"):
             # Stay and ley dealer draw
             dealerDrawEndCards(dealer, player)
-            whoWon(dealer, player, cards)
+            whoWon(dealer, player, deck)
 
         elif(inp is "Q" or inp is "q"):
             sys.exit()
@@ -240,12 +253,11 @@ def playerAndComputer(dealer, player, cards):
         sys.exit()
 
 
-def play(deck):
-    dealer = Player("dealer")
-    player = Player("player")
-
+def play(deck, dealer, player):
     # TODO: Add conditions to show it
     print("Status: %d" % int(deck.returnCountCards()))
+    print("Player wins: %d" % int(player.getWins()))
+    print("Dealer wins: %d" % int(dealer.getWins()))
 
     if(len(deck.getDeck()) > 4):
         # Clean round
@@ -264,7 +276,7 @@ def play(deck):
         printCards(player)
 
         while(True):
-            playerAndComputer(dealer, player, deck)
+            playerAndComputer(deck, dealer, player)
 
     else:
         print("End of deck.")
@@ -272,6 +284,9 @@ def play(deck):
 
 
 if __name__ == "__main__":
+    dealer = Player("dealer")
+    player = Player("player")
+
     try:
         decks = int(input("Number of decks [6]: ") or 6)
         shuffles = int(input("Number of shuffles [4]: ") or 4)
@@ -284,4 +299,4 @@ if __name__ == "__main__":
     deck = shuffleDeck(createDeck(decks), shuffles)
 
     # Play the game
-    play(deck)
+    play(deck, dealer, player)
